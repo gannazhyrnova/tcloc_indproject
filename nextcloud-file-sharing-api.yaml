@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: Nextcloud File Sharing API
+  version: 1.0.0
+  description: |
+    Companion API reference for the TCLoc Nextcloud Files guide.
+    Create a read-only share for Maya, then remove that share after the review.
+    The host and response examples are illustrative.
+servers:
+  - url: https://cloud.example.com/ocs/v2.php/apps/files_sharing/api/v1
+    description: Example Nextcloud OCS Share API base URL
+externalDocs:
+  description: Nextcloud OCS Share API
+  url: https://docs.nextcloud.com/server/stable/developer_manual/client_apis/OCS/ocs-share-api.html
+security:
+  - basicAuth: []
+tags:
+  - name: Shares
+    description: Create and remove individual user shares.
+paths:
+  /shares:
+    post:
+      tags: [Shares]
+      operationId: createUserShare
+      summary: Create a share for a teammate
+      description: |
+        Share a file with an individual Nextcloud user. The example gives Maya
+        read access to the project draft. Save the share ID from ocs.data.id.
+      parameters:
+        - $ref: '#/components/parameters/OcsApiRequest'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [path, shareType, shareWith]
+              properties:
+                path:
+                  type: string
+                  description: File path relative to the authenticated user's Files root.
+                  example: /Project Review/Review-draft.odt
+                shareType:
+                  type: integer
+                  enum: [0]
+                  description: Share with an individual Nextcloud user.
+                shareWith:
+                  type: string
+                  description: The recipient's Nextcloud username.
+                  example: maya
+                permissions:
+                  type: integer
+                  enum: [1]
+                  description: Send 1 explicitly to grant read access. This guide covers read-only shares.
+            example:
+              path: /Project Review/Review-draft.odt
+              shareType: 0
+              shareWith: maya
+              permissions: 1
+      responses:
+        '200':
+          description: Share created. The example shows selected response fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ocs:
+                    type: object
+                    properties:
+                      meta:
+                        $ref: '#/components/schemas/OcsMeta'
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            description: Share ID to use when removing this share.
+                          path:
+                            type: string
+                          share_with:
+                            type: string
+                          permissions:
+                            type: integer
+              example:
+                ocs:
+                  meta: {status: ok, statuscode: 200, message: OK}
+                  data:
+                    id: '42'
+                    path: /Project Review/Review-draft.odt
+                    share_with: maya
+                    permissions: 1
+        '400':
+          description: Invalid share type or request fields.
+        '403':
+          description: The authenticated user cannot share this item.
+        '404':
+          description: The file or recipient could not be found, or Nextcloud could not share the file.
+  /shares/{share_id}:
+    delete:
+      tags: [Shares]
+      operationId: deleteShare
+      summary: Remove a share after a review
+      description: |
+        Remove the share created for Maya. This ends access through that share.
+        The file remains in Project Review. Access granted through other shares may continue.
+      parameters:
+        - $ref: '#/components/parameters/OcsApiRequest'
+        - name: share_id
+          in: path
+          required: true
+          description: Use the value returned in ocs.data.id when the share was created.
+          schema:
+            type: string
+          example: '42'
+      responses:
+        '200':
+          description: Share removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ocs:
+                    type: object
+                    properties:
+                      meta:
+                        $ref: '#/components/schemas/OcsMeta'
+                      data:
+                        type: array
+                        maxItems: 0
+                        items: {}
+              example:
+                ocs:
+                  meta: {status: ok, statuscode: 200, message: OK}
+                  data: []
+        '403':
+          description: The authenticated user lacks permission to remove the share.
+        '404':
+          description: Nextcloud could not find or access the share using this account.
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Use a Nextcloud username and app password.
+  parameters:
+    OcsApiRequest:
+      name: OCS-APIRequest
+      in: header
+      required: true
+      description: Required by the Nextcloud OCS API.
+      schema:
+        type: string
+        enum: ['true']
+      example: 'true'
+  schemas:
+    OcsMeta:
+      type: object
+      properties:
+        status:
+          type: string
+        statuscode:
+          type: integer
+        message:
+          type: string
+          nullable: true
