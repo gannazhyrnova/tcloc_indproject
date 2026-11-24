@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: |
     Companion API reference for the TCLoc Nextcloud Files guide.
-    Create a read-only share for Maya, then remove that share after the review.
+    Create an individual user share, then remove it using the returned share ID.
     The host and response examples are illustrative.
 servers:
   - url: https://cloud.example.com/ocs/v2.php/apps/files_sharing/api/v1
@@ -24,7 +24,7 @@ paths:
       operationId: createUserShare
       summary: Create a share for a teammate
       description: |
-        Share a file with an individual Nextcloud user. The example gives Maya
+        Share a file with an individual Nextcloud user. The worked example uses fictional recipient Maya and gives her
         read access to the project draft. Save the share ID from ocs.data.id.
       parameters:
         - $ref: '#/components/parameters/OcsApiRequest'
@@ -102,7 +102,7 @@ paths:
       operationId: deleteShare
       summary: Remove a share after a review
       description: |
-        Remove the share created for Maya. This ends access through that share.
+        Remove the share identified by share_id. This ends access through that share.
         The file remains in Project Review. Access granted through other shares may continue.
       parameters:
         - $ref: '#/components/parameters/OcsApiRequest'
